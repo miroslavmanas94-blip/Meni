@@ -90,7 +90,6 @@ export default {
   const code=parts[1].toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,16);
   if(!/^DUO-\d{4}$/.test(code)) return json({error:"Neplatný kód místnosti."},400);
   const stub=env.ROOMS.getByName(code);
-  const inner=new URL(request.url); inner.pathname="/"+parts.slice(2).join("/");
-  return stub.fetch(new Request(inner,request));
+  return stub.fetch(request);
  }
 };
