@@ -54,6 +54,7 @@ export class Room {
      state.phase="game"; state.game=games.includes(body.game)?body.game:(games.includes(state.game||"")?state.game:"truth"); state.round=1; state.prompt=promptFor(state.game); state.answers={}; state.revealed=false; break;
     case "answer":
      if(state.phase!=="game") return json({error:"Hra ještě nezačala."},409);
+     if(Object.prototype.hasOwnProperty.call(state.answers,token)) return json({error:"Odpověď už byla potvrzena."},409);
      state.answers[token]=String(body.answer||"").slice(0,500); if(String(body.answer||"").trim()) state.scores[token]=(state.scores[token]||0)+1; state.revealed=state.players.every(p=>Object.prototype.hasOwnProperty.call(state.answers,p.id)); break;
     case "next":
      if(!state.revealed) return json({error:"Počkejte, až odpoví oba hráči."},409);
@@ -64,7 +65,7 @@ export class Room {
      else {state.round++;state.prompt=promptFor(state.game||"truth");state.answers={};state.revealed=false;}
      break;
     case "leave":
-     state.players=state.players.filter(p=>p.id!==token); delete state.scores[token]; delete state.answers[token]; break;
+     state.players=state.players.filter(p=>p.id!==token); delete state.scores[token]; delete state.answers[token]; state.phase="lobby";state.game=null;state.round=0;state.prompt=null;state.answers={};state.revealed=false;state.nextVotes=[];state.players.forEach(p=>p.ready=false); break;
     default: return json({error:"Neznámá akce."},400);
    }
    await this.state.storage.put("state",state); return json({state});
