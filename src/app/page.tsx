@@ -9,7 +9,9 @@ type Prompt = { id: string; game: GameId; category: string; text: string; kind: 
 type Saved = { nickname: string; partner: string; xp: number; wins: number; custom: Prompt[]; history: { game: string; score: number; date: string }[]; adult: boolean };
 const STORE = "duo-app-v1";
 const ROOM_SESSION_STORE = "duo-room-session-v1";
-const ROOM_API_RAW = process.env.NEXT_PUBLIC_DUO_ROOM_API || (typeof window !== "undefined" ? window.location.origin : "");
+// Room endpoints are served by the same deployed `meni` Worker in worker.ts.
+// Prefer same-origin so a stale NEXT_PUBLIC_DUO_ROOM_API cannot point to an old Worker.
+const ROOM_API_RAW = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_DUO_ROOM_API || "");
 const ROOM_API = ROOM_API_RAW.endsWith("/") ? ROOM_API_RAW.slice(0, -1) : ROOM_API_RAW;
 const games: {id:GameId;title:string;subtitle:string;emoji:string;color:string;kind:string}[] = [
  {id:"truth",title:"Pravda, nebo úkol",subtitle:"Odhal tajemství nebo přijmi výzvu",emoji:"🎲",color:"rose",kind:"Otázky & úkoly"},
@@ -95,10 +97,18 @@ export default function Home() {
  const game = games.find(g=>g.id===selected)!;
  const notify = (s:string)=>{setNotice(s);window.setTimeout(()=>setNotice(""),2800)};
  const roomRequest = async (path:string, body?:unknown) => {
-  if(!ROOM_API) throw new Error("Online místnosti nejsou nakonfigurované. Nejprve nasaď room-service a nastav NEXT_PUBLIC_DUO_ROOM_API.");
-  const response=await fetch(ROOM_API+path,{method:body?"POST":"GET",headers:body?{"content-type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined,cache:"no-store"});
-  const data=await response.json().catch(()=>({error:"Server vrátil neplatnou odpověď."}));
-  if(!response.ok) throw new Error(data.error||"Nepodařilo se spojit s místností.");
+  if(!ROOM_API) throw new Error("Nelze určit adresu aplikace. Obnov stránku a zkus to znovu.");
+  const response=await fetch(ROOM_API+path,{method:body?"POST":"GET",headers:body?{"content-type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined,cache:"no-store",credentials:"same-origin"});
+  const raw=await response.text();
+  let data:any;
+  try { data=raw?JSON.parse(raw):{}; }
+  catch {
+   const detail=response.status===404
+    ? "Worker meni zatím nemá nasazené API online místností. Je potřeba znovu nasadit aktuální verzi aplikace."
+    : "Worker meni místo JSON odpovědi vrátil HTML nebo neplatná data.";
+   throw new Error(detail+" (HTTP "+response.status+").");
+  }
+  if(!response.ok) throw new Error(data.error||"Požadavek na místnost selhal (HTTP "+response.status+").");
   return data;
  };
  const createRoom = async ()=>{
