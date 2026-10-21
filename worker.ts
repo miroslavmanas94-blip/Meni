@@ -6,7 +6,7 @@ import roomService, { Room } from "./room-service/worker";
 export { Room };
 
 export default {
-  async fetch(request: Request, env: any, ctx: ExecutionContext) {
+  async fetch(request: Request, env: any, ctx: any) {
     const pathname = new URL(request.url).pathname;
     if (pathname === "/health" || pathname === "/rooms" || pathname.startsWith("/rooms/")) {
       return roomService.fetch(request, env);
