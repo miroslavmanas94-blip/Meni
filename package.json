@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "rooms:deploy": "wrangler deploy --config room-service/wrangler.jsonc",
+    "rooms:dev": "wrangler dev --config room-service/wrangler.jsonc"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.6.5",
