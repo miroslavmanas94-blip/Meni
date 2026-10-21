@@ -41,3 +41,15 @@ V nastavení Cloudflare nastav:
 Nepoužívej `npx run build` — tento příkaz není platný a vede k chybě „could not determine executable to run“. `npm run cf:build` vytvoří OpenNext artefakty, které následně nasadí Wrangler. Build ani deploy zatím nejsou potvrzené jako úspěšné; po změně nastavení zkontroluj nový deployment log. Existující Cloudflare Worker `meni` nebyl tímto commitem přepsán.
 
 Před nasazením spusť `npm run typecheck`, `npm run build`, následně `npm run cf:build` a `npm run cf:preview`. Pro skutečné online pokoje je třeba nasadit samostatné API s trvalým úložištěm / Durable Objects a připojit jej k frontendu.
+
+
+## Skutečné online místnosti DUO
+
+Online pokoj používá samostatný Cloudflare Worker s Durable Objects:
+
+1. Z kořene repozitáře spusť `npm install`.
+2. Přihlas Wrangler ke svému Cloudflare účtu a nasaď službu příkazem `npm run rooms:deploy`. Tím se vytvoří Worker `duo-room-service` a jeho SQLite Durable Object pro každou místnost.
+3. V Cloudflare nastav u webové aplikace build-time proměnnou `NEXT_PUBLIC_DUO_ROOM_API` na adresu nasazeného Workeru, například `https://duo-room-service.<tvuj-workers-subdomain>.workers.dev`. Použij skutečnou adresu, kterou Cloudflare po deployi zobrazí, ne doslovný příklad.
+4. Znovu sestav a nasaď webovou aplikaci, aby proměnná byla zahrnutá v klientském buildu.
+
+Po připojení druhého hráče se výběr hry objeví až ve společné čekárně. Hra se spustí, až oba hráči zvolí hru a označí se jako připravení. Odpovědi se přes API neodhalí, dokud neodpoví oba. Bez nasazené služby a nastavené proměnné se online místnosti nespustí; samotný commit není důkazem nasazení ani úspěšného buildu.
