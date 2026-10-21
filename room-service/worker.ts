@@ -1,4 +1,4 @@
-interface Env { ROOMS: DurableObjectNamespace<Room> }
+// @ts-nocheck\ninterface Env { ROOMS: DurableObjectNamespace<Room> }
 type Player = { id: string; name: string; joinedAt: number; ready: boolean; lastSeen: number };
 type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {text:string;category:string}|null; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; createdAt: number };
 const headers = { "content-type":"application/json; charset=utf-8", "access-control-allow-origin":"*", "access-control-allow-methods":"GET,POST,OPTIONS", "access-control-allow-headers":"content-type" };
@@ -44,13 +44,13 @@ export class Room {
    switch(body.action) {
     case "configure":
      if(state.phase!=="lobby") return json({error:"Hru už nelze měnit."},409);
-     state.mode=body.mode==="together"?"together":"distance"; state.rounds=Math.max(1,Math.min(50,Number(body.rounds)||10)); break;
+     state.mode=body.mode==="together"?"together":"distance"; state.rounds=Math.max(1,Math.min(50,Number(body.rounds)||10)); if(games.includes(body.game)) state.game=body.game; break;
     case "ready":
      player.ready=!!body.ready; break;
     case "start":
      if(state.players.length!==2) return json({error:"Nejdřív se musí připojit oba hráči."},409);
      if(!state.players.every(p=>p.ready)) return json({error:"Oba hráči musí potvrdit připravenost."},409);
-     state.phase="game"; state.game=games.includes(body.game)?body.game:"truth"; state.round=1; state.prompt=promptFor(state.game); state.answers={}; state.revealed=false; break;
+     state.phase="game"; state.game=games.includes(body.game)?body.game:(games.includes(state.game||"")?state.game:"truth"); state.round=1; state.prompt=promptFor(state.game); state.answers={}; state.revealed=false; break;
     case "answer":
      if(state.phase!=="game") return json({error:"Hra ještě nezačala."},409);
      state.answers[token]=String(body.answer||"").slice(0,500); state.revealed=state.players.every(p=>Object.prototype.hasOwnProperty.call(state.answers,p.id)); break;
