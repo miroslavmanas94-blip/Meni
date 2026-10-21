@@ -30,6 +30,14 @@ Otevři http://localhost:3000.
 
 Manifest je na `/manifest.webmanifest`; základní service worker cachuje úvodní stránku pro omezený offline fallback. Pro plnou offline podporu je potřeba testovat produkční build.
 
-## Nasazení
+## Nasazení na Cloudflare Workers
 
-Základní OpenNext konfigurace pro Cloudflare je v repozitáři, ale build ani deploy nebyly ověřeny. Před nasazením spusť `npm run typecheck`, `npm run build`, následně `npm run cf:build` a `npm run cf:preview`. Nasazení zatím neproběhlo a existující Cloudflare Worker `meni` nebyl přepsán. Pro skutečné online pokoje je třeba nasadit samostatné API s trvalým úložištěm / Durable Objects a připojit jej k frontendu.
+V nastavení Cloudflare nastav:
+
+- **Build command:** `npm run cf:build`
+- **Deploy command:** `npx wrangler deploy`
+- **Root directory:** `/` (kořen repozitáře)
+
+Nepoužívej `npx run build` — tento příkaz není platný a vede k chybě „could not determine executable to run“. `npm run cf:build` vytvoří OpenNext artefakty, které následně nasadí Wrangler. Build ani deploy zatím nejsou potvrzené jako úspěšné; po změně nastavení zkontroluj nový deployment log. Existující Cloudflare Worker `meni` nebyl tímto commitem přepsán.
+
+Před nasazením spusť `npm run typecheck`, `npm run build`, následně `npm run cf:build` a `npm run cf:preview`. Pro skutečné online pokoje je třeba nasadit samostatné API s trvalým úložištěm / Durable Objects a připojit jej k frontendu.
