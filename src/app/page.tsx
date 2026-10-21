@@ -8,7 +8,9 @@ type GameId = "truth" | "know" | "rather" | "think" | "match" | "quick" | "story
 type Prompt = { id: string; game: GameId; category: string; text: string; kind: "question" | "task"; adult?: boolean };
 type Saved = { nickname: string; partner: string; xp: number; wins: number; custom: Prompt[]; history: { game: string; score: number; date: string }[]; adult: boolean };
 const STORE = "duo-app-v1";
-const ROOM_API_RAW = process.env.NEXT_PUBLIC_DUO_ROOM_API || "";\nconst ROOM_API = ROOM_API_RAW.endsWith("/") ? ROOM_API_RAW.slice(0, -1) : ROOM_API_RAW;\nconst games: {id:GameId;title:string;subtitle:string;emoji:string;color:string;kind:string}[] = [
+const ROOM_API_RAW = process.env.NEXT_PUBLIC_DUO_ROOM_API || "";
+const ROOM_API = ROOM_API_RAW.endsWith("/") ? ROOM_API_RAW.slice(0, -1) : ROOM_API_RAW;
+const games: {id:GameId;title:string;subtitle:string;emoji:string;color:string;kind:string}[] = [
  {id:"truth",title:"Pravda, nebo úkol",subtitle:"Odhal tajemství nebo přijmi výzvu",emoji:"🎲",color:"rose",kind:"Otázky & úkoly"},
  {id:"know",title:"Kdo mě zná lépe?",subtitle:"Jak dobře znáš svou polovičku?",emoji:"🫶",color:"lavender",kind:"Hádání"},
  {id:"rather",title:"Co bys radši?",subtitle:"Dvě možnosti, jedno rozhodnutí",emoji:"💭",color:"peach",kind:"Volby"},
