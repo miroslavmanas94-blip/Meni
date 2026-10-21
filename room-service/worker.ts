@@ -1,4 +1,5 @@
-// @ts-nocheck\ninterface Env { ROOMS: DurableObjectNamespace<Room> }
+// @ts-nocheck
+interface Env { ROOMS: DurableObjectNamespace<Room> }
 type Player = { id: string; name: string; joinedAt: number; ready: boolean; lastSeen: number };
 type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {text:string;category:string}|null; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; nextVotes: string[]; createdAt: number };
 const headers = { "content-type":"application/json; charset=utf-8", "access-control-allow-origin":"*", "access-control-allow-methods":"GET,POST,OPTIONS", "access-control-allow-headers":"content-type" };
