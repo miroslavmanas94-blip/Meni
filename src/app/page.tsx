@@ -90,8 +90,30 @@ export default function Home() {
  const bank = useMemo(()=>[...BANK,...saved.custom], [saved.custom]);
  const game = games.find(g=>g.id===selected)!;
  const notify = (s:string)=>{setNotice(s);window.setTimeout(()=>setNotice(""),2800)};
- const createRoom = ()=>{const code="DUO-"+String(Math.floor(1000+Math.random()*9000));setRoom(code);setNickname(saved.nickname||"Hráč 1");setPartnerName("");setScreen("lobby");notify("Místnost vytvořena. Sdílej kód s druhým hráčem.")};
- const joinRoom = ()=>{const c=joinCode.trim().toUpperCase();if(!/^DUO-?\d{4}$/.test(c)){notify("Zadej platný kód ve tvaru DUO-4821.");return;}setRoom(c.startsWith("DUO-")?c:"DUO-"+c.slice(3));setNickname(saved.nickname||"Hráč 2");setScreen("lobby");notify("Kód přijat. Demo místnost otevřena.")};
+ const roomRequest = async (path:string, body?:unknown) => {
+  if(!ROOM_API) throw new Error("Online místnosti nejsou nakonfigurované. Nejprve nasaď room-service a nastav NEXT_PUBLIC_DUO_ROOM_API.");
+  const response=await fetch(ROOM_API+path,{method:body?"POST":"GET",headers:body?{"content-type":"application/json"}:undefined,body:body?JSON.stringify(body):undefined,cache:"no-store"});
+  const data=await response.json().catch(()=>({error:"Server vrátil neplatnou odpověď."}));
+  if(!response.ok) throw new Error(data.error||"Nepodařilo se spojit s místností.");
+  return data;
+ };
+ const createRoom = async ()=>{
+  if(roomBusy)return;setRoomBusy(true);
+  try{const name=(nickname||saved.nickname||"Hráč 1").trim().slice(0,24);let code="";
+   let data:any;for(let attempt=0;attempt<5;attempt++){code="DUO-"+String(Math.floor(1000+Math.random()*9000));try{data=await roomRequest("/rooms/"+code+"/create",{nickname:name,mode});break}catch(e){if(attempt===4)throw e;}}
+   setRoom(code);setRoomToken(data.token);setRoomState(data.state);setNickname(name);setPartnerName("");setScreen("lobby");notify("Místnost vytvořena. Pošli kód druhému hráči.");
+  }catch(e){notify(e instanceof Error?e.message:"Místnost se nepodařilo vytvořit.");}finally{setRoomBusy(false);}
+ };
+ const joinRoom = async ()=>{
+  const c=joinCode.trim().toUpperCase().replace(/^DUO-?/,"");if(!/^\\d{4}$/.test(c)){notify("Zadej platný kód ve tvaru DUO-4821.");return;}
+  if(roomBusy)return;setRoomBusy(true);
+  try{const code="DUO-"+c;const name=(nickname||saved.nickname||"Hráč 2").trim().slice(0,24);const data=await roomRequest("/rooms/"+code+"/join",{nickname:name,mode});
+   setRoom(code);setRoomToken(data.token);setRoomState(data.state);setNickname(name);setPartnerName(data.state.players?.[0]?.name||"Druhý hráč");setScreen("lobby");notify("Připojeno do společné místnosti.");
+  }catch(e){notify(e instanceof Error?e.message:"Do místnosti se nepodařilo připojit.");}finally{setRoomBusy(false);}
+ };
+ const roomAction = async (action:string, extra:Record<string,unknown>={}) => {
+  const data=await roomRequest("/rooms/"+room,{token:roomToken,action,...extra});if(data.state)setRoomState(data.state);return data;
+ };
  const copyRoom = async()=>{try{await navigator.clipboard.writeText(room);notify("Kód zkopírován!")}catch{notify("Kód místnosti: "+room)}};
  const startGame = (id:GameId)=>{if(id==="wheel"){const g=rand(games.filter(x=>x.id!=="wheel"&&x.id!=="voice"));setSelected(g.id);setCurrent(rand(bank.filter(p=>p.game===g.id))||rand(bank));}else{setSelected(id);setCurrent(rand(bank.filter(p=>p.game===id))||rand(bank));}setRound(1);setScore(0);setAnswer("");setOtherAnswer("");setSubmitted(false);setRevealed(false);setStory([]);setTimerSeconds(30);setTimerOn(id==="quick");setScreen("game")};
  const chooseRoomGame = async(id:GameId)=>{if(id==="voice"){notify("Hlasovku můžete poslat dobrovolně ve své aplikaci pro volání.");return;}setSelected(id);try{await roomAction("configure",{mode,rounds});await roomAction("ready",{ready:true});notify("Výběr uložen. Čeká se na druhého hráče.");}catch(e){notify(e instanceof Error?e.message:"Nastavení se nepodařilo uložit.");}};
