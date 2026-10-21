@@ -104,7 +104,7 @@ export default function Home() {
   }catch(e){notify(e instanceof Error?e.message:"Místnost se nepodařilo vytvořit.");}finally{setRoomBusy(false);}
  };
  const joinRoom = async ()=>{
-  const c=joinCode.trim().toUpperCase().replace(/^DUO-?/,"");if(!/^\\d{4}$/.test(c)){notify("Zadej platný kód ve tvaru DUO-4821.");return;}
+  const c=joinCode.trim().toUpperCase().replace(/^DUO-?/,"");if(c.length!==4||c.split("").some(ch=>ch<"0"||ch>"9")){notify("Zadej platný kód ve tvaru DUO-4821.");return;}
   if(roomBusy)return;setRoomBusy(true);
   try{const code="DUO-"+c;const name=(nickname||saved.nickname||"Hráč 2").trim().slice(0,24);const data=await roomRequest("/rooms/"+code+"/join",{nickname:name,mode});
    setRoom(code);setRoomToken(data.token);setRoomState(data.state);setNickname(name);setPartnerName(data.state.players?.[0]?.name||"Druhý hráč");setScreen("lobby");notify("Připojeno do společné místnosti.");
