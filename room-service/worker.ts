@@ -1,6 +1,6 @@
 // @ts-nocheck\ninterface Env { ROOMS: DurableObjectNamespace<Room> }
 type Player = { id: string; name: string; joinedAt: number; ready: boolean; lastSeen: number };
-type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {text:string;category:string}|null; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; createdAt: number };
+type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {text:string;category:string}|null; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; nextVotes: string[]; createdAt: number };
 const headers = { "content-type":"application/json; charset=utf-8", "access-control-allow-origin":"*", "access-control-allow-methods":"GET,POST,OPTIONS", "access-control-allow-headers":"content-type" };
 const json = (data: unknown, status=200) => new Response(JSON.stringify(data), {status,headers});
 const games = ["truth","know","rather","think","match","quick","story","wheel","compat","secret","custom"];
@@ -29,7 +29,7 @@ export class Room {
    if(url.pathname.endsWith("/create")) {
     if(state && Date.now()-state.createdAt < 12*60*60*1000) return json({error:"Místnost už existuje."},409);
     const id=crypto.randomUUID(); const player:Player={id,name:String(body.nickname||"Hráč 1").slice(0,24),joinedAt:Date.now(),lastSeen:Date.now(),ready:false};
-    state={code,players:[player],mode:body.mode==="together"?"together":"distance",phase:"lobby",game:null,rounds:10,round:0,prompt:null,answers:{},revealed:false,scores:{[id]:0},createdAt:Date.now()};
+    state={code,players:[player],mode:body.mode==="together"?"together":"distance",phase:"lobby",game:null,rounds:10,round:0,prompt:null,answers:{},revealed:false,scores:{[id]:0},nextVotes:[],createdAt:Date.now()};
     await this.state.storage.put("state",state); return json({state,token:id});
    }
    if(!state) return json({error:"Místnost neexistuje nebo vypršela."},404);
@@ -53,9 +53,12 @@ export class Room {
      state.phase="game"; state.game=games.includes(body.game)?body.game:(games.includes(state.game||"")?state.game:"truth"); state.round=1; state.prompt=promptFor(state.game); state.answers={}; state.revealed=false; break;
     case "answer":
      if(state.phase!=="game") return json({error:"Hra ještě nezačala."},409);
-     state.answers[token]=String(body.answer||"").slice(0,500); state.revealed=state.players.every(p=>Object.prototype.hasOwnProperty.call(state.answers,p.id)); break;
+     state.answers[token]=String(body.answer||"").slice(0,500); if(String(body.answer||"").trim()) state.scores[token]=(state.scores[token]||0)+1; state.revealed=state.players.every(p=>Object.prototype.hasOwnProperty.call(state.answers,p.id)); break;
     case "next":
      if(!state.revealed) return json({error:"Počkejte, až odpoví oba hráči."},409);
+     if(!state.nextVotes.includes(token)) state.nextVotes.push(token);
+     if(state.players.some(p=>!state.nextVotes.includes(p.id))) { await this.state.storage.put("state",state); return json({state,waitingForPartner:true}); }
+     state.nextVotes=[];
      if(state.round>=state.rounds){state.phase="lobby";state.game=null;state.prompt=null;state.round=0;state.answers={};state.revealed=false;state.players.forEach(p=>p.ready=false);}
      else {state.round++;state.prompt=promptFor(state.game||"truth");state.answers={};state.revealed=false;}
      break;
