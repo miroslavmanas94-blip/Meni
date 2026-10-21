@@ -80,7 +80,8 @@ export default function Home() {
  const [current,setCurrent] = useState<Prompt|null>(null); const [answer,setAnswer] = useState(""); const [otherAnswer,setOtherAnswer] = useState(""); const [submitted,setSubmitted] = useState(false); const [revealed,setRevealed] = useState(false);
  const [adultGate,setAdultGate] = useState(false); const [bothAdults,setBothAdults] = useState(false); const [showAdult,setShowAdult] = useState(false);
  const [deckTitle,setDeckTitle] = useState(""); const [deckText,setDeckText] = useState(""); const [deckKind,setDeckKind] = useState<"question"|"task">("question"); const [notice,setNotice] = useState(""); const [story,setStory] = useState<string[]>([]); const [timerSeconds,setTimerSeconds] = useState(30); const [timerOn,setTimerOn] = useState(false);
- useEffect(()=>{if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});},[]);\n useEffect(()=>{try{const v=localStorage.getItem(STORE);if(v)setSaved({...starterSaved,...JSON.parse(v)})}catch{}setReady(true)},[]);
+ useEffect(()=>{if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});},[]);
+ useEffect(()=>{try{const v=localStorage.getItem(STORE);if(v)setSaved({...starterSaved,...JSON.parse(v)})}catch{}setReady(true)},[]);
  useEffect(()=>{if(ready)try{localStorage.setItem(STORE,JSON.stringify(saved))}catch{}},[saved,ready]);
  useEffect(()=>{if(!timerOn)return; if(timerSeconds<=0){setTimerOn(false);return;} const t=window.setTimeout(()=>setTimerSeconds(s=>s-1),1000);return()=>window.clearTimeout(t)},[timerOn,timerSeconds]);
  const bank = useMemo(()=>[...BANK,...saved.custom], [saved.custom]);
