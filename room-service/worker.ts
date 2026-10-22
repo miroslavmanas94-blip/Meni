@@ -47,7 +47,14 @@ export class Room {
    switch(body.action) {
     case "configure":
      if(state.phase!=="lobby") return json({error:"Hru už nelze měnit."},409);
-     state.mode=body.mode==="together"?"together":"distance"; state.rounds=Math.max(1,Math.min(50,Number(body.rounds)||10)); if(games.includes(body.game)) state.game=body.game; break;
+     state.mode=body.mode==="together"?"together":"distance"; state.rounds=Math.max(1,Math.min(50,Number(body.rounds)||10));
+     if(games.includes(body.game)) {
+      state.game=body.game;
+      if(!state.usedPrompts) state.usedPrompts={};
+      const incoming=Array.isArray(body.usedPromptIds)?body.usedPromptIds.filter((id:any)=>typeof id==="string"&&id.length<80):[];
+      state.usedPrompts[body.game]=Array.from(new Set([...(state.usedPrompts[body.game]||[]),...incoming]));
+     }
+     break;
     case "ready":
      player.ready=!!body.ready; break;
     case "start":
