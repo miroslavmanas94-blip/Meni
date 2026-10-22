@@ -2,7 +2,7 @@
 import { getPromptBank, type GameId } from "../src/lib/prompt-bank";
 interface Env { ROOMS: DurableObjectNamespace<Room> }
 type Player = { id: string; name: string; joinedAt: number; ready: boolean; lastSeen: number };
-type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {id?:string;text:string;category:string}|null; usedPrompts: Record<string,string[]>; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; nextVotes: string[]; createdAt: number };
+type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {id?:string;text:string;category:string}|null; usedPrompts: Record<string,string[]>; callSignals?: {id:number;from:string;to:string;type:string;payload?:unknown;createdAt:number}[]; callSignalSeq?:number; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; nextVotes: string[]; createdAt: number };
 const headers = { "content-type":"application/json; charset=utf-8", "access-control-allow-origin":"*", "access-control-allow-methods":"GET,POST,OPTIONS", "access-control-allow-headers":"content-type" };
 const json = (data: unknown, status=200) => new Response(JSON.stringify(data), {status,headers});
 const games = ["truth","know","rather","think","match","quick","story","wheel","compat","secret","voice","custom"];
@@ -85,7 +85,9 @@ export class Room {
    if(!player) return json({error:"Nejsi členem této místnosti."},403);
    player.lastSeen=Date.now(); await this.state.storage.put("state",state);
    const safe={...state,answers:state.revealed?state.answers:Object.fromEntries(Object.keys(state.answers).map(k=>[k,"Odpověď potvrzena"]))};
-   return json({state:safe,token});
+   const since=Math.max(0,Number(url.searchParams.get("signalsSince")||0)||0);
+   const signals=(state.callSignals||[]).filter(s=>s.to===token&&s.id>since);
+   return json({state:safe,token,signals});
   }
   return json({error:"Metoda není podporována."},405);
  }
