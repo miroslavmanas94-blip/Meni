@@ -20,8 +20,7 @@ export default function VoiceToneGame({room,token,partnerToken,partner,round,isF
  const stop=()=>{if(timer.current!==null)window.clearTimeout(timer.current);if(recorder.current?.state==="recording")recorder.current.stop();};
  const sendClip=async()=>{if(!clip)return;setSending(true);setError("");try{if(clip.length>65000)throw new Error("Hlasovka je moc velká. Nahraj kratší zprávu.");await send("voice-clip",{audio:clip,mime,round},partnerToken);setResult("Hlasovka odeslána. Čekám na tip druhého hráče…");onNotice("Hlasovka odeslána.");}catch(e){setError(e instanceof Error?e.message:"Odeslání se nezdařilo.");}finally{setSending(false);}};
  const sendGuess=async()=>{if(!guess||!incoming)return;try{await send("tone-guess",{round,guess},partnerToken);setResult("Tvůj tip byl odeslán.");}catch(e){setError(e instanceof Error?e.message:"Tip se nepodařilo odeslat.");}};
- const [incomingTone,setIncomingTone]=useState("");
- useEffect(()=>{if(incoming)setIncomingTone("");},[incoming]);
+ useEffect(()=>{if(recording)stop();setTone(TONES[0]);setClip("");setIncoming(null);setGuess("");setResult("");setError("");},[round]);
  const playClip=()=>{if(!incoming||!audio.current)return;audio.current.src=incoming.audio;void audio.current.play().catch(()=>setError("Přehrání hlasovky se nepodařilo."));};
  return <section className="tone-game">
   <div className="tone-head"><span className="tone-icon">🎙️</span><div><span className="eyebrow">HLASOVÁ VÝZVA · KOLO {round}</span><h3>{isFirst?"Vyber tón a předveď ho":"Poslechni si hlasovku a hádej"}</h3><p>{isFirst?"Zvol si tón potají, nahraj krátkou hlasovku a druhý hráč ho bude hádat.":"Přehraj hlasovku a vyber tón, který podle tebe druhý hráč předvádí."}</p></div></div>
