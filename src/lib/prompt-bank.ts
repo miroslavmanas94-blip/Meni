@@ -346,7 +346,7 @@ export const PROMPT_BANKS: Record<GameId, BankPrompt[]> = {
  match: combine("match",matchFrames,topics),
  quick: combine("quick",quickFrames,quickActions,"task"),
  story: combine("story",storyFrames,storyOpenings),
- wheel: uniquePrompts("wheel",Array.from({length:25},(_,i)=>wheelActions[i]).flatMap((base,i)=>topics.map(topic=>base.replace(/[.!?]$/,"")+" — "+topic+"."))),
+ wheel: uniquePrompts("wheel",wheelActions.flatMap(base=>topics.map(topic=>base.replace(/[.!?]$/,"")+" — "+topic+"."))),
  compat: combine("compat",compatFrames,topics),
  secret: combine("secret",truthFrames.map((f)=>"Tajně a jen podle sebe: "+f),topics),
  voice: combine("voice",voiceFrames,topics,"task"),
