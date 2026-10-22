@@ -134,7 +134,12 @@ const quickActions = [
  "Vymysli legrační název pro film o vašem dnešním dni.",
  "Zkus vyjmenovat pět věcí určité barvy, které máte poblíž.",
  "Vytvoř slovní erb vašeho týmu ze tří symbolů.",
- "Řekni jednu laskavou věc, kterou druhý možná neví, že dělá dobře."
+ "Řekni jednu laskavou věc, kterou druhý možná neví, že dělá dobře.",
+ "Vymysli název pro imaginární muzeum vašich společných zážitků.",
+ "Předveď zprávy počasí pro náladu vašeho dua.",
+ "Vymysli nové pravidlo pro den, kdy se nikomu nic nechce.",
+ "Popiš obyčejný předmět jako vzácný poklad.",
+ "Vymysli tři originální názvy pro společný tajný klub."
 ];
 const storyOpenings = [
  "Ve schránce se objevil dopis, který měl být doručen před sto lety…",
