@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 export const metadata: Metadata = {
  title: "DUO ❤️ — Hry pro dva odkudkoliv",
- description: "Romantické, vtipné a společné hry pro dva. Osobně nebo na dálku — bez kamery a bez tlaku.",
+ description: "Romantické, vtipné a společné hry pro dva. Osobně nebo na dálku, s hlasovými i videohovory.",
  applicationName: "DUO",
  manifest: "/manifest.webmanifest",
  appleWebApp: { capable: true, statusBarStyle: "default", title: "DUO" },
