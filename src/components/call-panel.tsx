@@ -64,7 +64,7 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
  const accept=async()=>{
   if(!incoming)return;
   try{
-   const pc=await createPeer(incoming.payload?.type==="offer" && !!incoming.payload?.sdp?.includes("m=video"));await pc.setRemoteDescription(new RTCSessionDescription(incoming.payload));
+   const pc=await createPeer(incoming.payload?.type==="offer" && !!incoming.payload?.sdp?.includes("m=video"));await pc.setRemoteDescription(new RTCSessionDescription(incoming.payload));for(const candidate of pendingIce.current.splice(0)){try{await pc.addIceCandidate(new RTCIceCandidate(candidate));}catch{}}
    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await send("answer",{sdp:answer.sdp,type:answer.type},incoming.from);
    setIncoming(null);setVisible(true);setCallState("connected");
   }catch(e){setError(e instanceof Error?e.message:"Hovor se nepodařilo přijmout.");}
