@@ -90,7 +90,7 @@ export class Room {
      state.players=state.players.filter(p=>p.id!==token); delete state.scores[token]; delete state.answers[token]; state.phase="lobby";state.game=null;state.round=0;state.prompt=null;state.answers={};state.revealed=false;state.nextVotes=[];state.players.forEach(p=>p.ready=false); break;
     default: return json({error:"Neznámá akce."},400);
    }
-   await this.state.storage.put("state",state); return json({state});
+   await this.state.storage.put("state",state); const responseState={...state}; delete responseState.callSignals; delete responseState.callSignalSeq; return json({state:responseState});
   }
   if(request.method==="GET") {
    if(!state) return json({error:"Místnost neexistuje nebo vypršela."},404);
