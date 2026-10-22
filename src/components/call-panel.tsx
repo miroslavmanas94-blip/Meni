@@ -19,6 +19,7 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
  const remoteVideo=useRef<HTMLVideoElement|null>(null);
  const localStream=useRef<MediaStream|null>(null);
  const peer=useRef<RTCPeerConnection|null>(null);
+ const pendingIce=useRef<RTCIceCandidateInit[]>([]);
  const sequence=useRef(0);
  const processed=useRef(new Set<number>());
  const busy=useRef(false);
@@ -29,9 +30,9 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Signalizace hovoru selhala.");
   return data;
- },[room,token,incoming]);
+ },[room,token,incoming,partnerToken]);
  const stopMedia=useCallback(()=>{
-  peer.current?.close();peer.current=null;
+  peer.current?.close();peer.current=null;pendingIce.current=[];
   localStream.current?.getTracks().forEach(t=>t.stop());localStream.current=null;
   if(localVideo.current)localVideo.current.srcObject=null;
   if(remoteVideo.current)remoteVideo.current.srcObject=null;
@@ -79,8 +80,8 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
      if(processed.current.has(s.id))continue;processed.current.add(s.id);sequence.current=Math.max(sequence.current,s.id);
      if(s.to!==token)continue;
      if(s.type==="offer"&&!peer.current){setIncoming(s);setCallState("ringing");setVisible(true);}
-     else if(s.type==="answer"&&peer.current){await peer.current.setRemoteDescription(new RTCSessionDescription(s.payload));setCallState("connected");}
-     else if(s.type==="ice"&&peer.current&&s.payload){try{await peer.current.addIceCandidate(new RTCIceCandidate(s.payload));}catch{}}
+     else if(s.type==="answer"&&peer.current){await peer.current.setRemoteDescription(new RTCSessionDescription(s.payload));for(const candidate of pendingIce.current.splice(0)){try{await peer.current.addIceCandidate(new RTCIceCandidate(candidate));}catch{}}setCallState("connected");}
+     else if(s.type==="ice"&&s.payload){if(peer.current?.remoteDescription){try{await peer.current.addIceCandidate(new RTCIceCandidate(s.payload));}catch{}}else{pendingIce.current.push(s.payload);}}
      else if(s.type==="hangup"){stopMedia();onNotice("Druhý účastník ukončil hovor.");}
     }
    }catch{}
@@ -98,7 +99,7 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
  return <div className="call-tools">
   <div className="call-launch-row">
    <button className="call-launch audio" onClick={()=>void startCall(false)} disabled={callState!=="idle"}><Phone size={16}/> Zavolat</button>
-   <button className="call-launch video" onClick={()=>void startCall(true)} disabled={callState!=="idle"}><Video size={16}/> Videohovor</button>
+   <button className="call-launch video" onClick={()=>void startCall(true)} disabled={callState!=="idle"}><Video size={16}/> Videohovor</button>{callState!=="idle"&&!visible&&<button className="call-launch" onClick={()=>setVisible(true)}>Pokračovat v hovoru</button>}
   </div>
   <p className="call-hint"><Users size={13}/> Hovor je dostupný druhému hráči v této místnosti. Nahrávání je vypnuté.</p>
   {error&&<p className="call-error">{error}</p>}
