@@ -69,7 +69,7 @@ export default function CallPanel({room,token,partner,partnerToken,onNotice}:Pro
    setIncoming(null);setVisible(true);setCallState("connected");
   }catch(e){setError(e instanceof Error?e.message:"Hovor se nepodařilo přijmout.");}
  };
- const reject=async()=>{if(incoming)try{await send("hangup",{},incoming.from)}catch{}setIncoming(null);setCallState("idle");};
+ const reject=async()=>{if(incoming)try{await send("hangup",{},incoming.from)}catch{}setIncoming(null);setCallState("idle");setVisible(false);};
  const hangup=async()=>{try{await send("hangup",{},incoming?.from)}catch{}stopMedia();};
  useEffect(()=>{active.current=true;let alive=true;
   const poll=async()=>{
