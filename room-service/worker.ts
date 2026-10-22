@@ -96,7 +96,7 @@ export class Room {
    if(!state) return json({error:"Místnost neexistuje nebo vypršela."},404);
    const token=url.searchParams.get("token")||""; const player=state.players.find(p=>p.id===token);
    if(!player) return json({error:"Nejsi členem této místnosti."},403);
-   player.lastSeen=Date.now(); await this.state.storage.put("state",state);
+   player.lastSeen=Date.now(); const now=Date.now(); state.callSignals=(state.callSignals||[]).filter(s=>now-s.createdAt<120000); await this.state.storage.put("state",state);
    const safe={...state,answers:state.revealed?state.answers:Object.fromEntries(Object.keys(state.answers).map(k=>[k,"Odpověď potvrzena"]))}; delete safe.callSignals; delete safe.callSignalSeq;
    const since=Math.max(0,Number(url.searchParams.get("signalsSince")||0)||0);
    const signals=(state.callSignals||[]).filter(s=>s.to===token&&s.id>since);
