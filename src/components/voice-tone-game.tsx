@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, Play, Check, Send, Headphones, RotateCcw } from "lucide-react";
+import { Mic, Square, Play, Check, Send, Headphones } from "lucide-react";
 
 const TONES=["Veselý","Romantický","Tajemný","Smutný","Naštvaný","Klidný","Nervózní","Sebevědomý","Vystrašený","Ironický","Překvapený"];
 type Signal={id:number;from:string;to:string;type:string;payload:any;createdAt:number};
@@ -14,7 +14,7 @@ export default function VoiceToneGame({room,token,partnerToken,partner,round,isF
  const endpoint=(since:number)=>"/rooms/"+encodeURIComponent(room)+"?token="+encodeURIComponent(token)+"&signalsSince="+since;
  const send=async(type:string,payload:any,to:string)=>{const res=await fetch("/rooms/"+encodeURIComponent(room),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"signal",token,to,payload:{type,payload}})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error||"Zprávu se nepodařilo poslat.");};
  useEffect(()=>{let alive=true;const poll=async()=>{try{const res=await fetch(endpoint(seq.current),{cache:"no-store"});if(!res.ok)return;const data=await res.json();for(const s of (data.signals||[]) as Signal[]){if(seen.current.has(s.id))continue;seen.current.add(s.id);seq.current=Math.max(seq.current,s.id);if(s.to!==token)continue;if(s.type==="voice-clip"&&Number(s.payload?.round)===round&&!isFirst){setIncoming({audio:s.payload.audio,mime:s.payload.mime||"audio/webm",round});setGuess("");setResult("");}if(s.type==="tone-guess"&&Number(s.payload?.round)===round&&isFirst){setResult((s.payload.guess===tone?"Správně! 🎉":"Tip: "+s.payload.guess+" — správný tón byl "+tone)+".");}}}catch{}};
- const id=window.setInterval(()=>{if(alive)void poll()},900);void poll();return()=>{alive=false;window.clearInterval(id)};},[room,token,round,isFirst]);
+ const id=window.setInterval(()=>{if(alive)void poll()},900);void poll();return()=>{alive=false;window.clearInterval(id)};},[room,token,round,isFirst,tone]);
  useEffect(()=>()=>{if(timer.current!==null)window.clearTimeout(timer.current);recorder.current?.state==="recording"&&recorder.current.stop();stream.current?.getTracks().forEach(t=>t.stop());},[]);
  const start=async()=>{setError("");setClip("");setSeconds(0);try{if(!navigator.mediaDevices?.getUserMedia)throw new Error("Nahrávání hlasu vyžaduje HTTPS a povolený mikrofon.");const media=await navigator.mediaDevices.getUserMedia({audio:true});stream.current=media;const mr=new MediaRecorder(media);recorder.current=mr;chunks.current=[];mr.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};mr.onstop=()=>{const blob=new Blob(chunks.current,{type:mr.mimeType||"audio/webm"});setMime(blob.type);const reader=new FileReader();reader.onload=()=>setClip(String(reader.result||""));reader.readAsDataURL(blob);media.getTracks().forEach(t=>t.stop());stream.current=null;setRecording(false);};mr.start();setRecording(true);const started=Date.now();const tick=()=>{const s=Math.min(5,Math.floor((Date.now()-started)/1000));setSeconds(s);if(s>=5){if(mr.state==="recording")mr.stop();return;}timer.current=window.setTimeout(tick,150)};tick();}catch(e){setError(e instanceof Error?e.message:"Mikrofon se nepodařilo otevřít.");setRecording(false);}};
  const stop=()=>{if(timer.current!==null)window.clearTimeout(timer.current);if(recorder.current?.state==="recording")recorder.current.stop();};
