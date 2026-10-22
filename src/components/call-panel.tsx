@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Phone, PhoneCall, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize2, Minimize2, X, Camera, Users } from "lucide-react";
 
 type Signal = { id:number; from:string; to:string; type:"offer"|"answer"|"ice"|"hangup"; payload?:any; createdAt:number };
-type Props = { room:string; token:string; partner:string; apiBase?:string; onNotice:(message:string)=>void };
+type Props = { room:string; token:string; partner:string; partnerToken:string; onNotice:(message:string)=>void };
 
-export default function CallPanel({room,token,partner,onNotice}:Props) {
+export default function CallPanel({room,token,partner,partnerToken,onNotice}:Props) {
  const [expanded,setExpanded]=useState(false);
  const [incoming,setIncoming]=useState<Signal|null>(null);
  const [callState,setCallState]=useState<"idle"|"calling"|"ringing"|"connected">("idle");
@@ -25,7 +25,7 @@ export default function CallPanel({room,token,partner,onNotice}:Props) {
  const active=useRef(true);
  const endpoint=(since?:number)=>"/rooms/"+encodeURIComponent(room)+"?token="+encodeURIComponent(token)+(since===undefined?"":"&signalsSince="+since);
  const send=useCallback(async(type:Signal["type"],payload?:any,to?:string)=>{
-  const response=await fetch("/rooms/"+encodeURIComponent(room),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"signal",token,to:type==="hangup"?(to||incoming?.from||""):to,payload:{type,payload}})});
+  const response=await fetch("/rooms/"+encodeURIComponent(room),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"signal",token,to:to||incoming?.from||partnerToken,payload:{type,payload}})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"Signalizace hovoru selhala.");
   return data;
@@ -37,25 +37,25 @@ export default function CallPanel({room,token,partner,onNotice}:Props) {
   if(remoteVideo.current)remoteVideo.current.srcObject=null;
   setCallState("idle");setIncoming(null);setVisible(false);setExpanded(false);setError("");
  },[]);
- const createPeer=useCallback(async()=>{
+ const createPeer=useCallback(async(withVideo:boolean)=>{
   const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
   peer.current=pc;
   pc.onicecandidate=e=>{if(e.candidate)void send("ice",e.candidate.toJSON()).catch(()=>{});};
   pc.ontrack=e=>{if(remoteVideo.current)remoteVideo.current.srcObject=e.streams[0];setCallState("connected");setVisible(true);};
   pc.onconnectionstatechange=()=>{if(pc.connectionState==="connected")setCallState("connected");if(["failed","closed"].includes(pc.connectionState)&&active.current){setError("Spojení se přerušilo.");}};
-  const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:videoOn});
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:withVideo});
   localStream.current=stream;
   stream.getTracks().forEach(track=>pc.addTrack(track,stream));
   if(localVideo.current)localVideo.current.srcObject=stream;
   return pc;
- },[send,videoOn]);
+ },[send]);
  const startCall=async(withVideo:boolean)=>{
   if(busy.current)return;busy.current=true;setError("");setVideoOn(withVideo);setVisible(true);setCallState("calling");
   try{
    if(!navigator.mediaDevices?.getUserMedia)throw new Error("Pro hovory povol kameru/mikrofon a otevři web přes HTTPS.");
-   const pc=await createPeer();
+   const pc=await createPeer(withVideo);
    const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-   await send("offer",{sdp:offer.sdp,type:offer.type},roomToken);
+   await send("offer",{sdp:offer.sdp,type:offer.type},partnerToken);
    onNotice("Volání odesláno. Čeká se na přijetí.");
   }catch(e){stopMedia();setError(e instanceof Error?e.message:"Hovor se nepodařilo spustit.");}
   finally{busy.current=false;}
@@ -63,7 +63,7 @@ export default function CallPanel({room,token,partner,onNotice}:Props) {
  const accept=async()=>{
   if(!incoming)return;
   try{
-   const pc=await createPeer();await pc.setRemoteDescription(new RTCSessionDescription(incoming.payload));
+   const pc=await createPeer(incoming.payload?.type==="offer" && !!incoming.payload?.sdp?.includes("m=video"));await pc.setRemoteDescription(new RTCSessionDescription(incoming.payload));
    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await send("answer",{sdp:answer.sdp,type:answer.type},incoming.from);
    setIncoming(null);setVisible(true);setCallState("connected");
   }catch(e){setError(e instanceof Error?e.message:"Hovor se nepodařilo přijmout.");}
