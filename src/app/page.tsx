@@ -100,7 +100,7 @@ export default function Home() {
  };
  const leaveRoom = async()=>{try{if(ROOM_API&&room&&roomToken)await roomAction("leave");}catch{}try{localStorage.removeItem(ROOM_SESSION_STORE)}catch{}setRoom("");setRoomToken("");setRoomState(null);setScreen("setup");notify("Opustil/a jsi místnost.");};
  const copyRoom = async()=>{try{await navigator.clipboard.writeText(room);notify("Kód zkopírován!")}catch{notify("Kód místnosti: "+room)}};
- const startGame = (id:GameId)=>{if(id==="wheel"){const g=rand(games.filter(x=>x.id!=="wheel"));setSelected(g.id);setCurrent(drawPrompt(g.id)||rand(bank));}else{setSelected(id);setCurrent(drawPrompt(id)||rand(bank));}setRound(1);setScore(0);setAnswer("");setOtherAnswer("");setSubmitted(false);setRevealed(false);setStory([]);setTimerSeconds(30);setTimerOn(id==="quick");setScreen("game")};
+ const startGame = (id:GameId)=>{setSelected(id);setCurrent(drawPrompt(id)||rand(bank));setRound(1);setScore(0);setAnswer("");setOtherAnswer("");setSubmitted(false);setRevealed(false);setStory([]);setTimerSeconds(30);setTimerOn(id==="quick");setScreen("game")};
  const chooseRoomGame = async(id:GameId)=>{setSelected(id);try{await roomAction("configure",{mode,rounds});await roomAction("ready",{ready:true});notify("Výběr uložen. Čeká se na druhého hráče.");}catch(e){notify(e instanceof Error?e.message:"Nastavení se nepodařilo uložit.");}};
  const toggleReady = async()=>{try{const me=roomState?.players?.find((p:any)=>p.id===roomToken);await roomAction("ready",{ready:!me?.ready});}catch(e){notify(e instanceof Error?e.message:"Stav připravenosti se nepodařilo změnit.");}};
  const beginRoomGame = async()=>{try{await roomAction("start",{game:selected});}catch(e){notify(e instanceof Error?e.message:"Hru nelze spustit.");}};
