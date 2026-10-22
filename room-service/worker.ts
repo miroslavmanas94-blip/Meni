@@ -1,5 +1,5 @@
-import { getPromptBank, type GameId } from "../src/lib/prompt-bank";
 // @ts-nocheck
+import { getPromptBank, type GameId } from "../src/lib/prompt-bank";
 interface Env { ROOMS: DurableObjectNamespace<Room> }
 type Player = { id: string; name: string; joinedAt: number; ready: boolean; lastSeen: number };
 type RoomState = { code: string; players: Player[]; mode: "together"|"distance"; phase: "lobby"|"game"; game: string|null; rounds: number; round: number; prompt: {id?:string;text:string;category:string}|null; usedPrompts: Record<string,string[]>; answers: Record<string,string>; revealed: boolean; scores: Record<string,number>; nextVotes: string[]; createdAt: number };
