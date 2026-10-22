@@ -73,6 +73,19 @@ export class Room {
      if(state.round>=state.rounds){state.phase="lobby";state.game=null;state.prompt=null;state.round=0;state.answers={};state.revealed=false;state.players.forEach(p=>p.ready=false);}
      else {state.round++;state.prompt=promptFor(state.game||"truth",state);state.answers={};state.revealed=false;}
      break;
+    case "signal": {
+     const to=String(body.to||"");
+     const signal=body.payload||{};
+     const type=String(signal.type||"");
+     if(!["offer","answer","ice","hangup","voice-clip","tone-guess"].includes(type)) return json({error:"Neplatný typ signálu."},400);
+     if(!to || to===token || !state.players.some(p=>p.id===to)) return json({error:"Příjemce není členem této místnosti."},404);
+     const serialized=JSON.stringify(signal.payload??null);
+     if(serialized.length>90000) return json({error:"Signalizace je příliš velká."},413);
+     const now=Date.now();
+     state.callSignalSeq=(state.callSignalSeq||0)+1;
+     state.callSignals=[...(state.callSignals||[]).filter(s=>now-s.createdAt<120000),{id:state.callSignalSeq,from:token,to,type,payload:signal.payload,createdAt:now}].slice(-100);
+     break;
+    }
     case "leave":
      state.players=state.players.filter(p=>p.id!==token); delete state.scores[token]; delete state.answers[token]; state.phase="lobby";state.game=null;state.round=0;state.prompt=null;state.answers={};state.revealed=false;state.nextVotes=[];state.players.forEach(p=>p.ready=false); break;
     default: return json({error:"Neznámá akce."},400);
