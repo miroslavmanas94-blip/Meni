@@ -316,6 +316,28 @@ const voiceFrames = [
  "Nahraj krátké poděkování za něco kolem tématu {t}.",
  "Vymysli úvod podcastu, jehož tématem je {t}."
 ];
+const wheelFrames = [
+ "Roztočte překvapení kolem {t}: každý navrhne jednu možnost a vyberete tu, která vás oba láká.",
+ "Přeměňte {t} na minutovou týmovou misi, ve které musí každý přispět jedním nápadem.",
+ "Vymyslete legrační scénku, ve které hraje hlavní roli {t}, a rozdělte si role.",
+ "Položte si navzájem nečekanou otázku o tématu {t} a odpovězte bez dlouhého přemýšlení.",
+ "Vytvořte společný plán na {t}, který zvládnete uskutečnit bez utrácení peněz.",
+ "Zahrajte si hádání: jeden předvede {t} beze slov a druhý se pokusí uhodnout záměr.",
+ "Vymyslete krátký příběh, ve kterém se {t} změní v nečekané dobrodružství.",
+ "Každý řekněte jeden názor na {t}; najděte jednu shodu a jeden zajímavý rozdíl.",
+ "Navrhněte vlastní pravidlo hry inspirované {t} a otestujte ho v jednom kole.",
+ "Vymyslete překvapivý dárek nebo gesto spojené s {t}, které nestojí žádné peníze.",
+ "Popište {t} každý třemi slovy a pak společně vytvořte čtvrté slovo.",
+ "Vyberte si dvě protichůdné možnosti týkající se {t} a obhajte každou z nich vtipným způsobem.",
+ "Vytvořte zvukovou nebo slovní znělku pro vaše společné {t}.",
+ "Představte si, že jste experti na {t}; vysvětlete druhému nejdůležitější pravidlo.",
+ "Vymyslete pro {t} tři možné pokračování a společně vyberte to nejbláznivější.",
+ "Každý navrhněte malou výzvu související s {t}; druhý si vybere tu příjemnější.",
+ "Povězte si vzpomínku spojenou s {t} a doplňte detail, který si druhý možná nepamatuje.",
+ "Proměňte {t} v mini soutěž s jasnými pravidly a férovým způsobem, jak určit vítěze.",
+ "Navrhněte, jak by {t} vypadalo ve vašem vysněném světě, a spojte své nápady.",
+ "Vytvořte jednu otázku o {t}, na kterou byste si před dneškem netroufli zeptat."
+];
 const customFrames = [
  "Navrhněte vlastní otázku o tématu {t}, na kterou oba odpovíte po svém.",
  "Vytvořte pravidlo minihry o tématu {t}, které potřebuje spolupráci.",
@@ -346,7 +368,7 @@ export const PROMPT_BANKS: Record<GameId, BankPrompt[]> = {
  match: combine("match",matchFrames,topics),
  quick: combine("quick",quickFrames,quickActions,"task"),
  story: combine("story",storyFrames,storyOpenings),
- wheel: uniquePrompts("wheel",wheelActions.flatMap(base=>topics.map(topic=>base.replace(/[.!?]$/,"")+" — "+topic+"."))),
+ wheel: combine("wheel",wheelFrames,topics,"task"),
  compat: combine("compat",compatFrames,topics),
  secret: combine("secret",truthFrames.map((f)=>"Tajně a jen podle sebe: "+f),topics),
  voice: combine("voice",voiceFrames,topics,"task"),
