@@ -57,7 +57,18 @@ const buildBank = (kind: Kind): Entry[] => LEVELS.flatMap((level, li) =>
     const templates = kind === "pravda" ? TRUTHS : TASKS;
     const special = kind === "pravda" ? LEVEL_TRUTH[level] : LEVEL_TASK[level];
     const template = n % 2 === 0 ? templates[(n + li) % templates.length] : special[(n + li) % special.length];
-    const variation = n >= 20 ? ["", " Zkus odpovědět konkrétně a bez dlouhého přemýšlení.", " Přidej příklad ze svého života.", " Zapoj do odpovědi i druhého hráče."][(n + li) % 4] : "";
+    const variation = [
+      " Zkus odpovědět konkrétně a bez dlouhého přemýšlení.",
+      " Přidej příklad ze svého života.",
+      " Zapoj do odpovědi i druhého hráče.",
+      " Zaměř se na detail, který tě napadne jako první.",
+      " Zkus být originální a vyhni se obvyklé odpovědi.",
+      " Vysvětli také, proč sis vybral/a právě tuto možnost.",
+      " Pokud chceš, doplň odpověď krátkým příběhem.",
+      " Zkus do toho zapojit humor a lehkost.",
+      " Dej si pár vteřin na rozmyšlenou a pak odpověz.",
+      " Můžeš si zvolit vlastní způsob, jak výzvu splnit."
+    ][Math.floor(n / 10) % 10];
     return { id: kind + "-" + li + "-" + n, kind, level, category, text: template.replaceAll("{t}", theme) + variation };
   })
 );
@@ -84,6 +95,7 @@ export default function TruthOrDareGame({ onClose }: { onClose: () => void }) {
  const usedKey = level+"|"+category;
  const remaining = pool.filter(p=>!(used[usedKey]||[]).includes(p.id));
  const chooseKind = (next:Kind) => {
+   if(!girl.trim()||!boy.trim()){setNotice("Nejdřív vyplň jméno holky i kluka.");return;}
    if(level==="18+"&&!adultConfirmed){setShowAdultGate(true);return;}
    const candidates=pool.filter(p=>p.kind===next&&!(used[usedKey]||[]).includes(p.id));
    if(!candidates.length){setNotice("Tahle sada už je vyčerpaná. Obnov sadu, nebo změň úroveň či typ.");return;}
