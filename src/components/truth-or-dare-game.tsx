@@ -42,7 +42,7 @@ export default function TruthOrDareGame({ onClose }: { onClose: () => void }) {
  const [current,setCurrent]=useState<Card|null>(null);
  const [kind,setKind]=useState<Kind>("pravda");
  const [turn,setTurn]=useState(0);
- const [starter,setStarter]=useState(0);
+ const [starter,setStarter]=useState(()=>rand(2));
  const [adultConfirmed,setAdultConfirmed]=useState(false);
  const [showAdultGate,setShowAdultGate]=useState(false);
  const [flipped,setFlipped]=useState(false);
@@ -59,10 +59,10 @@ export default function TruthOrDareGame({ onClose }: { onClose: () => void }) {
  const playTone=(frequency=520)=>{if(!sound)return;try{const Ctx=window.AudioContext;if(!Ctx)return;const ctx=audioRef.current||new Ctx();audioRef.current=ctx;void ctx.resume();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type="sine";osc.frequency.value=frequency;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.07,ctx.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.22);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.23);}catch{}};
  const persistUsed=(next:string[])=>{setUsed(next);try{localStorage.setItem(USED_KEY,JSON.stringify(next))}catch{}};
  const startSpin=()=>{if(!girl.trim()||!boy.trim()){setNotice("Nejdřív vyplň jména obou hráčů.");return;}if(level==="18+"&&!adultConfirmed){setShowAdultGate(true);return;}if(!remaining.length){setNotice("Tato sada už je vyčerpaná. Obnov ji nebo změň úroveň.");return;}setStage("wheel");setCurrent(null);setFlipped(false);playTone(440);};
- const reveal=()=>{const candidates=remaining.filter(c=>c.kind===kind);if(!candidates.length){setNotice("Pro tento typ už nezbývá karta. Zkus druhý typ nebo obnov sadu.");setStage("setup");return;}const card=candidates[rand(candidates.length)];setCurrent(card);persistUsed([...used,card.id]);setFlipped(false);setStage("reveal");playTone(660);};
+ const reveal=(requestedKind:Kind=kind)=>{const candidates=remaining.filter(c=>c.kind===requestedKind);if(!candidates.length){setNotice("Pro tento typ už nezbývá karta. Zkus druhý typ nebo obnov sadu.");setStage("setup");return;}const card=candidates[rand(candidates.length)];setKind(requestedKind);setCurrent(card);persistUsed([...used,card.id]);setFlipped(false);setStage("reveal");playTone(660);};
  const nextTurn=()=>{setTurn(t=>t+1);setCurrent(null);setFlipped(false);setStage("setup");setNotice("");playTone(560);};
  const resetSet=()=>{persistUsed([]);setNotice("Použité karty byly obnoveny.");};
- const spinChoice=()=>{setKind(Math.random()<.5?"pravda":"úkol");playTone(350);window.setTimeout(reveal,650);};
+ const spinChoice=()=>{const selectedKind:Kind=Math.random()<.5?"pravda":"úkol";setKind(selectedKind);playTone(350);window.setTimeout(()=>reveal(selectedKind),650);};
  return <div className="td-overlay"><section className="td-app td-neon" role="dialog" aria-modal="true" aria-label="Pravda, nebo úkol">
   <header className="td-header"><button className="td-back" onClick={stage==="setup"?onClose:()=>setStage("setup")}><ArrowLeft size={17}/>{stage==="setup"?"Zavřít":"Zpět"}</button><div className="td-logo"><span><Heart size={18} fill="currentColor"/></span><div><b>Pravda, nebo úkol</b><small>NEON EDITION · HRA PRO DVA</small></div></div><button className="td-sound" onClick={()=>setSound(s=>!s)} aria-label={sound?"Vypnout zvuk":"Zapnout zvuk"}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}<span>{sound?"Zvuk zapnut":"Zvuk vypnut"}</span></button></header>
   <div className="td-body">
